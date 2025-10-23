@@ -9,6 +9,86 @@ import io
 from PIL import Image
 import base64
 
+import streamlit as st
+import os, base64, docx
+
+# ---- Viewer mode: open clean document window ----
+params = st.query_params
+if "view" in params:
+    selected_doc = params["view"]
+    file_path = os.path.join("documents", selected_doc)
+
+    # Minimal clean page
+    st.set_page_config(page_title=selected_doc, layout="centered")
+
+    st.markdown(
+        f"<h2 style='text-align:center; font-family:sans-serif;'>{selected_doc}</h2>",
+        unsafe_allow_html=True,
+    )
+
+    if os.path.exists(file_path):
+        if selected_doc.endswith(".txt"):
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#f9f9f9;
+                    border:1px solid #ddd;
+                    border-radius:10px;
+                    padding:20px;
+                    font-size:16px;
+                    line-height:1.6;
+                    white-space:pre-wrap;
+                    overflow:auto;
+                    height:600px;">
+                {content}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        elif selected_doc.endswith(".docx"):
+            document = docx.Document(file_path)
+            text = "\n".join([p.text for p in document.paragraphs])
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#f9f9f9;
+                    border:1px solid #ddd;
+                    border-radius:10px;
+                    padding:20px;
+                    font-size:16px;
+                    line-height:1.6;
+                    white-space:pre-wrap;
+                    overflow:auto;
+                    height:600px;">
+                {text}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        elif selected_doc.endswith(".pdf"):
+            with open(file_path, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+            st.markdown(
+                f"""
+                <iframe 
+                    src="data:application/pdf;base64,{base64_pdf}" 
+                    width="100%" 
+                    height="750px"
+                    style="border:none; border-radius:10px;">
+                </iframe>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.warning("⚠️ Le fichier n'existe plus.")
+
+    st.stop()  # ❗ Stops here — prevents search page from loading
+
+
 def wordcloud_to_base64(freq_dict) -> str:
     """Return a base64 PNG of a WordCloud from a Counter/freq dict."""
     wc = WordCloud(width=600, height=280, background_color="white").generate_from_frequencies(freq_dict)
@@ -186,7 +266,19 @@ def recherche(query, index):
     return set()
 
 # --------------------------------  Streamlit UI --------------------------------
-st.title("🔎 Mini Moteur de Recherche Documentaire (avec Base de Données)")
+st.markdown("""
+    <style>
+        h1 {
+            text-align: center;
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-top: 10px;
+            color: #2c2c2c;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("🔍 Moteur de Recherche")
 
 init_db()
 
@@ -214,21 +306,70 @@ col1, col2, col3 = st.columns([1, 1, 1])
 with col2:
     search_clicked = st.button("🔍 Rechercher")
 
+# ---- Handle query parameters first ----
+params = st.query_params
+if "open" in params:
+    st.session_state["selected_doc"] = params["open"]
+    # Optional: clean URL (remove ?open=...)
+    st.query_params.clear()
+
+
 # ---- Search results ----
 if query or search_clicked:
     resultats = recherche(query, index)
     if resultats:
         st.success(f"Documents trouvés : {len(resultats)}")
 
-        # ✅ Google-like search result styling
+        # ---- Style for results (Google-like layout) ----
+        st.markdown("""
+        <style>
+        .result {
+            position: relative;
+            margin-bottom: 35px;
+        }
+        .result a {
+            font-size: 20px;
+            color: #1a0dab;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .result a:hover {
+            text-decoration: underline;
+            color: #0b0080;
+        }
+        .result small {
+            color: #5f6368;
+            display: block;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+        .cloud-preview {
+            display: none;
+            position: absolute;
+            left: 360px;
+            top: -10px;
+            width: 420px;
+            background: #fff;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 8px 18px rgba(0,0,0,.12);
+            z-index: 10;
+        }
+        .result:hover .cloud-preview { display: block; }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # ---- Style for results ----
         st.markdown("""
         <style>
           .result {
               position: relative;
-              margin-bottom: 40px;
+              margin-bottom: 35px;
           }
           .result a {
-              font-size: 22px;          /* 🔹 Bigger document title */
+              font-size: 22px;
               color: #1a0dab;
               text-decoration: none;
               font-weight: 600;
@@ -241,13 +382,13 @@ if query or search_clicked:
           .result small {
               color: #5f6368;
               display: block;
-              font-size: 13px;          /* 🔹 Smaller for file path */
+              font-size: 13px;
               margin-top: 3px;
           }
           .cloud-preview {
               display: none;
               position: absolute;
-              left: 380px;
+              left: 360px;
               top: -10px;
               width: 420px;
               background: #fff;
@@ -258,47 +399,64 @@ if query or search_clicked:
               z-index: 10;
           }
           .result:hover .cloud-preview { display: block; }
-          @media (max-width: 900px) {
-              .cloud-preview {
-                  position: static;
-                  width: 100%;
-                  margin-top: 8px;
-              }
-          }
         </style>
         """, unsafe_allow_html=True)
 
-        # ✅ Loop over search results
+                # ✅ Loop over search results (with snippet like Google)
         for doc in sorted(resultats):
             file_path = os.path.join("documents", doc)
+
+            # ---- Create word cloud hover preview ----
             img_b64 = wordcloud_to_base64(freqs[doc]) if freqs.get(doc) else None
             cloud_html = (
                 f'<div class="cloud-preview"><img src="data:image/png;base64,{img_b64}" '
                 f'style="width:100%; height:auto;"/></div>' if img_b64 else ""
             )
 
-            # 🔹 Display title first, then path — both styled
+           # ---- Load short description (snippet) ----
+            import re
+
+            snippet = ""
+            if os.path.exists(file_path):
+                try:
+                    if doc.endswith(".txt"):
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            text = f.read()
+                    elif doc.endswith(".docx"):
+                        import docx
+                        document = docx.Document(file_path)
+                        text = " ".join([p.text for p in document.paragraphs])
+                    elif doc.endswith(".pdf"):
+                        from pdfminer.high_level import extract_text
+                        text = extract_text(file_path)
+                    else:
+                        text = ""
+
+                    # 🧹 Clean & format text
+                    text = re.sub(r"\s+", " ", text.strip())  # remove extra spaces and line breaks
+                    text = text.capitalize()  # make it look cleaner
+                    if len(text) > 250:
+                        snippet = text[:250] + "..."
+                    else:
+                        snippet = text
+
+                except Exception as e:
+                    snippet = "(Aucun aperçu disponible)"
+            else:
+                snippet = "(Fichier introuvable)"
+
+            # ---- Render result (like Google style) ----
             st.markdown(
                 f"""
                 <div class="result">
-                  <a href="?doc={doc}" target="_self">{doc}</a>
-                  <small>{file_path}</small>
-                  {cloud_html}
+                    <a href="?view={doc}" target="_blank">{doc}</a>
+                    <small>{file_path}</small>
+                    <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">{snippet}</p>
+                    {cloud_html}
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-
-            # 🔹 Add "Ouvrir le document" button
-            if st.button(f"📄 {doc}", key=f"open_{doc}"):
-                st.session_state["selected_doc"] = doc
-                st.rerun()
-
-        # Capture the clicked doc from query string
-        params = st.query_params
-        if "doc" in params:
-            st.session_state["selected_doc"] = params["doc"]
-            st.rerun()
 
     else:
         st.warning("Aucun document trouvé")
@@ -314,9 +472,9 @@ if "selected_doc" in st.session_state:
     if os.path.exists(file_path):
         st.markdown("---")
         st.markdown(f"## 🗂️ **{selected_doc}**")
-        st.markdown("### Aperçu du contenu :")
+        st.markdown("### 📘 Aperçu du contenu :")
 
-        # ---- TXT files ----
+        # ---- TXT ----
         if selected_doc.endswith(".txt"):
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -338,10 +496,11 @@ if "selected_doc" in st.session_state:
                 unsafe_allow_html=True,
             )
 
-        # ---- DOCX files ----
+        # ---- DOCX ----
         elif selected_doc.endswith(".docx"):
+            import docx
             document = docx.Document(file_path)
-            full_text = "\n\n".join([p.text for p in document.paragraphs])
+            text = "\n".join([p.text for p in document.paragraphs])
             st.markdown(
                 f"""
                 <div style="
@@ -354,22 +513,22 @@ if "selected_doc" in st.session_state:
                     white-space:pre-wrap;
                     overflow:auto;
                     height:500px;">
-                {full_text}
+                {text}
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        # ---- PDF files ----
+        # ---- PDF ----
         elif selected_doc.endswith(".pdf"):
-            with open(file_path, "rb") as pdf_file:
-                base64_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
+            with open(file_path, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode("utf-8")
             st.markdown(
                 f"""
                 <iframe 
                     src="data:application/pdf;base64,{base64_pdf}" 
                     width="100%" 
-                    height="700px" 
+                    height="700px"
                     style="border-radius:10px; border:1px solid #ddd;">
                 </iframe>
                 """,

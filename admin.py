@@ -39,9 +39,9 @@ def lire_pdf(filepath):
     except:
         return ""
 
-# =============================
+# =======================================================================================
 # 📤 1. Upload new documents
-# =============================
+# =======================================================================================
 if action == "📤 Ajouter un document":
     st.subheader("📄 Importer un nouveau document")
     uploaded_file = st.file_uploader("Choisissez un fichier (TXT, DOCX, PDF)", type=["txt", "docx", "pdf"])
@@ -53,9 +53,9 @@ if action == "📤 Ajouter un document":
         st.success(f"✅ Fichier ajouté : {uploaded_file.name}")
         st.info("Il sera indexé automatiquement au prochain redémarrage ou via 'Ré-indexer'.")
 
-# =============================
+# =======================================================================================
 # 📊 2. View keyword statistics
-# =============================
+# =======================================================================================
 elif action == "📊 Voir les statistiques":
     st.subheader("📈 Statistiques des mots-clés")
 
@@ -71,9 +71,9 @@ elif action == "📊 Voir les statistiques":
     else:
         st.warning("Aucune donnée disponible. Vous devez peut-être ré-indexer les documents.")
 
-# =============================
+# =======================================================================================
 # 🧹 3. Reindex documents
-# =============================
+# =======================================================================================
 elif action == "🧹 Ré-indexer":
     st.subheader("🔄 Ré-indexation complète")
 

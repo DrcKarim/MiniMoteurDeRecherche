@@ -12,7 +12,7 @@ import base64
 import streamlit as st
 import os, base64, docx
 
-# ---- Viewer mode: open clean document window ----
+# ------------------- Viewer mode: open clean document window ------------------------
 params = st.query_params
 if "view" in params:
     selected_doc = params["view"]
@@ -282,7 +282,7 @@ st.title("🔍 Moteur de Recherche")
 
 init_db()
 
-# ---- Load or populate DB ----
+# ------------------- Load or populate DB -------------------
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 cursor.execute("SELECT COUNT(*) FROM documents")
@@ -306,7 +306,7 @@ col1, col2, col3 = st.columns([1, 1, 1])
 with col2:
     search_clicked = st.button("🔍 Rechercher")
 
-# ---- Handle query parameters first ----
+# ------------------- Handle query parameters first -------------------
 params = st.query_params
 if "open" in params:
     st.session_state["selected_doc"] = params["open"]
@@ -314,7 +314,7 @@ if "open" in params:
     st.query_params.clear()
 
 
-# ---- Search results ----
+# ------------------- Search results -------------------
 if query or search_clicked:
     resultats = recherche(query, index)
     if resultats:
@@ -464,7 +464,7 @@ else:
     st.info("💡 Entrez un mot ou une requête pour commencer la recherche.")
 
 
-# ---- Display selected document ----
+# ------------------- Display selected document -------------------
 if "selected_doc" in st.session_state:
     selected_doc = st.session_state["selected_doc"]
     file_path = os.path.join("documents", selected_doc)

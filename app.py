@@ -12,7 +12,7 @@ import base64
 import streamlit as st
 import os, base64, docx
 
-# ------------------- Viewer mode: open clean document window ------------------------
+# ------------------- Viewer mode: open clean document window ----------------------------------
 params = st.query_params
 if "view" in params:
     selected_doc = params["view"]

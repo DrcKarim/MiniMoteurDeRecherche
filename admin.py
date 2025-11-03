@@ -7,16 +7,17 @@ from pdfminer.high_level import extract_text
 
 DB_PATH = "search_engine.db"
 UPLOAD_DIR = "documents"
+STOPWORDS_FILE = "stopwords.txt"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 st.set_page_config(page_title="⚙️ Admin Panel", layout="wide")
-st.title("⚙️ Panneau d'administration — Gestion du moteur de recherche")
+st.title("⚙️ Panneau d'administration - Gestion du moteur de recherche")
 
 # ---- Sidebar menu
 st.sidebar.header("📁 Actions disponibles")
 action = st.sidebar.radio(
-    "Choisissez une action :", 
-    ["📤 Ajouter un document", "📊 Voir les statistiques", "🧹 Ré-indexer"]
+    "Choisissez une action :",
+    ["📤 Ajouter un document", "📊 Voir les statistiques", "🧹 Ré-indexer", "✏️ Gérer les stopwords"]
 )
 
 # ---- Function: normalize words
@@ -110,3 +111,47 @@ elif action == "🧹 Ré-indexer":
         conn.commit()
         conn.close()
         st.success("✅ Ré-indexation terminée avec succès.")
+
+# =======================================================================================
+# ✏️ 4. Manage Stopwords
+# =======================================================================================
+elif action == "✏️ Gérer les stopwords":
+    st.subheader("📝 Gestion des Stopwords")
+
+    if not os.path.exists(STOPWORDS_FILE):
+        with open(STOPWORDS_FILE, "w", encoding="utf-8") as f:
+            f.write("le\nla\nles\nun\nune\net\nde\ndu\ndes\nà\nau\naux\n")  # default list
+
+    with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
+        stopwords = f.read().splitlines()
+
+    st.markdown("### 🔍 Liste actuelle des stopwords")
+    st.write(", ".join(stopwords))
+
+    st.markdown("---")
+
+    new_word = st.text_input("➕ Ajouter un mot à la liste")
+    if st.button("Ajouter"):
+        if new_word and new_word not in stopwords:
+            stopwords.append(new_word)
+            with open(STOPWORDS_FILE, "w", encoding="utf-8") as f:
+                f.write("\n".join(stopwords))
+            st.success(f"✅ '{new_word}' ajouté à la liste.")
+        else:
+            st.warning("⚠️ Mot déjà présent ou vide.")
+
+    st.markdown("---")
+
+    remove_word = st.selectbox("🗑️ Supprimer un mot", [""] + stopwords)
+    if st.button("Supprimer"):
+        if remove_word and remove_word in stopwords:
+            stopwords.remove(remove_word)
+            with open(STOPWORDS_FILE, "w", encoding="utf-8") as f:
+                f.write("\n".join(stopwords))
+            st.success(f"🗑️ '{remove_word}' supprimé de la liste.")
+        else:
+            st.warning("⚠️ Sélectionnez un mot valide.")
+
+    st.markdown("---")
+    if st.button("🧾 Afficher le contenu brut du fichier"):
+        st.code("\n".join(stopwords))

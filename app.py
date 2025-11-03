@@ -12,6 +12,7 @@ import base64
 import streamlit as st
 import os, base64, docx
 
+
 # ------------------- Viewer mode: open clean document window ----------------------------------
 params = st.query_params
 if "view" in params:
@@ -278,7 +279,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔍 Moteur de Recherche")
+st.title("🔍 DocuFind") 
 
 init_db()
 

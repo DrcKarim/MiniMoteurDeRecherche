@@ -10,8 +10,16 @@ UPLOAD_DIR = "documents"
 STOPWORDS_FILE = "stopwords.txt"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-st.set_page_config(page_title="⚙️ Admin Panel", layout="wide")
-st.title("⚙️ Panneau d'administration - Gestion du moteur de recherche")
+st.set_page_config(page_title="🔍 DocuFind — Admin Panel", layout="wide")
+
+# ---- Header with logo and app name ----
+st.markdown("""
+    <div style='text-align:center; margin-bottom:20px;'>
+        <h1 style='font-size:42px;'>🔍 <span style="color:#1a73e8;">DocuFind</span></h1>
+        <h3 style='color:gray;'>Panneau d'administration – Gestion du moteur de recherche</h3>
+        <hr style='border:1px solid #ddd;'/>
+    </div>
+""", unsafe_allow_html=True)
 
 # ---- Sidebar menu
 st.sidebar.header("📁 Actions disponibles")
@@ -120,7 +128,7 @@ elif action == "✏️ Gérer les stopwords":
 
     if not os.path.exists(STOPWORDS_FILE):
         with open(STOPWORDS_FILE, "w", encoding="utf-8") as f:
-            f.write("le\nla\nles\nun\nune\net\nde\ndu\ndes\nà\nau\naux\n")  # default list
+            f.write("le\nla\nles\nun\nune\net\nde\ndu\ndes\nà\nau\naux\n")
 
     with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
         stopwords = f.read().splitlines()

@@ -279,7 +279,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔍 DocuFind") 
+#st.title("🔍 DocuFind") 
+
+# ---- Header with logo and app name ----
+st.markdown("""
+    <div style='text-align:center; margin-bottom:20px;'>
+        <h1 style='font-size:42px;'>🔍 <span style="color:#1a73e8;">DocuFind</span></h1>
+    </div>
+""", unsafe_allow_html=True)
 
 init_db()
 

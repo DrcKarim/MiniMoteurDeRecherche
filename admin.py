@@ -66,25 +66,86 @@ if action == "📤 Ajouter un document":
 # 📊 2. View keyword statistics
 # =======================================================================================
 elif action == "📊 Voir les statistiques":
-    st.subheader("📈 Statistiques des mots-clés")
+    st.subheader("📈 Statistiques globales du moteur DocuFind")
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT word, SUM(count) FROM word_frequencies GROUP BY word ORDER BY SUM(count) DESC LIMIT 20")
-    rows = cursor.fetchall()
-    conn.close()
 
-    if rows:
-        st.bar_chart({word: count for word, count in rows})
-        st.dataframe(rows, use_container_width=True)
+    # ---- 1️⃣ Global overview
+    total_docs = cursor.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    total_words = cursor.execute("SELECT COUNT(*) FROM word_frequencies").fetchone()[0]
+    unique_words = cursor.execute("SELECT COUNT(DISTINCT word) FROM word_frequencies").fetchone()[0]
+
+    st.markdown("### 🌍 Vue d'ensemble")
+    st.metric("📄 Nombre total de documents", total_docs)
+    st.metric("🔤 Total de mots indexés", total_words)
+    st.metric("🧩 Mots uniques", unique_words)
+
+    st.markdown("---")
+
+    # ---- 2️⃣ Top documents by word count
+    cursor.execute("""
+        SELECT d.filename, COUNT(w.word) AS total_mots, COUNT(DISTINCT w.word) AS mots_uniques
+        FROM documents d
+        LEFT JOIN word_frequencies w ON d.id = w.document_id
+        GROUP BY d.id
+        ORDER BY total_mots DESC
+    """)
+    doc_stats = cursor.fetchall()
+
+    if doc_stats:
+        st.markdown("### 🏆 Top documents par nombre de mots")
+        st.dataframe(
+            [{"Document": d, "Mots totaux": t, "Mots uniques": u} for d, t, u in doc_stats],
+            use_container_width=True
+        )
     else:
-        st.warning("Aucune donnée disponible. Vous devez peut-être ré-indexer les documents.")
+        st.warning("⚠️ Aucun document indexé pour le moment.")
+
+    st.markdown("---")
+
+    # ---- 3️⃣ Per-document breakdown
+    if total_docs > 0:
+        st.markdown("### 🔍 Analyse d’un document spécifique")
+        cursor.execute("SELECT filename, id FROM documents ORDER BY filename")
+        docs = cursor.fetchall()
+        doc_names = [d[0] for d in docs]
+        selected_doc = st.selectbox("Choisissez un document :", doc_names)
+
+        if selected_doc:
+            doc_id = [d[1] for d in docs if d[0] == selected_doc][0]
+            cursor.execute("""
+                SELECT word, SUM(count) as freq
+                FROM word_frequencies
+                WHERE document_id = ?
+                GROUP BY word
+                ORDER BY freq DESC
+                LIMIT 10
+            """, (doc_id,))
+            top_words = cursor.fetchall()
+
+            if top_words:
+                st.markdown(f"#### 🔠 Top 10 mots du document : **{selected_doc}**")
+                st.bar_chart({w: f for w, f in top_words})
+                st.dataframe(top_words, use_container_width=True)
+            else:
+                st.info("Aucun mot indexé pour ce document (filtré par les stopwords).")
+
+    conn.close()
 
 # =======================================================================================
 # 🧹 3. Reindex documents
 # =======================================================================================
 elif action == "🧹 Ré-indexer":
     st.subheader("🔄 Ré-indexation complète")
+
+    # ---- Load stopwords
+    if os.path.exists(STOPWORDS_FILE):
+        with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
+            stopwords = set(word.strip().lower() for word in f.read().splitlines() if word.strip())
+    else:
+        stopwords = set()
+        st.warning("⚠️ Aucun fichier de stopwords trouvé. Tous les mots seront indexés.")
 
     files = os.listdir(UPLOAD_DIR)
     if not files:
@@ -93,6 +154,7 @@ elif action == "🧹 Ré-indexer":
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
+        # Clear old data
         cursor.execute("DELETE FROM documents")
         cursor.execute("DELETE FROM word_frequencies")
 
@@ -109,16 +171,29 @@ elif action == "🧹 Ré-indexer":
             elif ext == ".pdf":
                 content = lire_pdf(path)
 
+            # Insert new document
             cursor.execute("INSERT INTO documents (filename, filetype, content) VALUES (?, ?, ?)", (file, ext, content))
             doc_id = cursor.lastrowid
 
+            # Tokenize and filter stopwords
             words = Counter(normalisation(content))
+            added_words = 0
             for w, c in words.items():
-                cursor.execute("INSERT INTO word_frequencies (document_id, word, count) VALUES (?, ?, ?)", (doc_id, w, c))
+                w = w.lower().strip()  # normalize the token
+                if w and w not in stopwords and len(w) > 2:
+                    cursor.execute(
+                        "INSERT INTO word_frequencies (document_id, word, count) VALUES (?, ?, ?)",
+                        (doc_id, w, c)
+                    )
+                    added_words += 1
+
+            if added_words == 0:
+                st.info(f"ℹ️ Aucun mot utile indexé pour {file} (filtré par les stopwords).")
 
         conn.commit()
         conn.close()
-        st.success("✅ Ré-indexation terminée avec succès.")
+        st.success("✅ Ré-indexation terminée avec succès (stopwords exclus et mots normalisés).")
+
 
 # =======================================================================================
 # ✏️ 4. Manage Stopwords

@@ -1,0 +1,26 @@
+cat <<EOF > .gitignore
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+dist/
+tmp/
+out-tsc/
+
+# Angular
+.angular/
+.angular/cache/
+src/environments/*.local.ts
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# Archives
+*.zip
+EOF

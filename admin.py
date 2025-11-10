@@ -77,9 +77,20 @@ elif action == "📊 Voir les statistiques":
     unique_words = cursor.execute("SELECT COUNT(DISTINCT word) FROM word_frequencies").fetchone()[0]
 
     st.markdown("### 🌍 Vue d'ensemble")
-    st.metric("📄 Nombre total de documents", total_docs)
-    st.metric("🔤 Total de mots indexés", total_words)
-    st.metric("🧩 Mots uniques", unique_words)
+
+    overview_data = {
+        "📄 Nombre total de documents": [total_docs],
+        "🔤 Total de mots indexés": [total_words],
+        "🧩 Mots uniques": [unique_words],
+    }
+
+    import pandas as pd
+    overview_df = pd.DataFrame(overview_data)
+    # Convert to HTML table to hide index completely
+    st.markdown(
+    overview_df.to_html(index=False, justify="center"),
+    unsafe_allow_html=True
+    )
 
     st.markdown("---")
 
@@ -132,6 +143,7 @@ elif action == "📊 Voir les statistiques":
                 st.info("Aucun mot indexé pour ce document (filtré par les stopwords).")
 
     conn.close()
+
 
 # =======================================================================================
 # 🧹 3. Reindex documents

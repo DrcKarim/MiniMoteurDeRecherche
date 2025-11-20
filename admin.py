@@ -31,7 +31,13 @@ action = st.sidebar.radio(
 # ---- Function: normalize words
 def normalisation(text):
     text = text.lower()
-    tokens = re.findall(r"\b[a-zA-ZÀ-ÿ'-]+\b", text)
+
+    # Remove leading d', l', j', etc.
+    text = re.sub(r"\b[dlcjtsn]'(?=[a-zà-ÿ])", "", text)
+
+    # Extract clean tokens
+    tokens = re.findall(r"[a-zA-ZÀ-ÿ]+", text)
+
     return tokens
 
 # ---- Function: read DOCX and PDF

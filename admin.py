@@ -55,11 +55,11 @@ def lire_pdf(filepath):
         return ""
 
 # =======================================================================================
-# 📤 1. Upload new documents
+#  1. Upload new documents
 # =======================================================================================
 if action == "📤 Ajouter un document":
     st.subheader("📄 Importer un nouveau document")
-    uploaded_file = st.file_uploader("Choisissez un fichier (TXT, DOCX, PDF)", type=["txt", "docx", "pdf"])
+    uploaded_file = st.file_uploader("Choisissez un fichier (TXT, DOCX, PDF, HTML)", type=["txt", "docx", "pdf"])
 
     if uploaded_file:
         file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
@@ -69,7 +69,7 @@ if action == "📤 Ajouter un document":
         st.info("Il sera indexé automatiquement au prochain redémarrage ou via 'Ré-indexer'.")
 
 # =======================================================================================
-# 📊 2. View keyword statistics
+#  2. View keyword statistics
 # =======================================================================================
 elif action == "📊 Voir les statistiques":
     st.subheader("📈 Statistiques globales du moteur DocuFind")
@@ -199,10 +199,12 @@ elif action == "🧹 Ré-indexer":
             for w, c in words.items():
                 w = w.lower().strip()  # normalize the token
                 if w and w not in stopwords and len(w) > 2:
-                    cursor.execute(
-                        "INSERT INTO word_frequencies (document_id, word, count) VALUES (?, ?, ?)",
-                        (doc_id, w, c)
-                    )
+                    cursor.execute("""
+                        INSERT INTO word_frequencies (document_id, word, count)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(document_id, word)
+                        DO UPDATE SET count = excluded.count;
+                    """, (doc_id, w, c))
                     added_words += 1
 
             if added_words == 0:

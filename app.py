@@ -11,7 +11,7 @@ import base64
 
 import streamlit as st
 import os, base64, docx
-
+import textwrap
 
 # ------------------- Viewer mode: open clean document window ----------------------------------
 params = st.query_params
@@ -321,7 +321,6 @@ if "open" in params:
     # Optional: clean URL (remove ?open=...)
     st.query_params.clear()
 
-
 # ------------------- Search results -------------------
 if query or search_clicked:
     resultats = recherche(query, index)
@@ -336,7 +335,7 @@ if query or search_clicked:
             margin-bottom: 35px;
         }
         .result a {
-            font-size: 20px;
+            font-size: 22px;
             color: #1a0dab;
             text-decoration: none;
             font-weight: 600;
@@ -350,7 +349,7 @@ if query or search_clicked:
             color: #5f6368;
             display: block;
             font-size: 13px;
-            margin-top: 2px;
+            margin-top: 3px;
         }
         .cloud-preview {
             display: none;
@@ -369,48 +368,7 @@ if query or search_clicked:
         </style>
         """, unsafe_allow_html=True)
 
-        # ---- Style for results ----
-        st.markdown("""
-        <style>
-          .result {
-              position: relative;
-              margin-bottom: 35px;
-          }
-          .result a {
-              font-size: 22px;
-              color: #1a0dab;
-              text-decoration: none;
-              font-weight: 600;
-              cursor: pointer;
-          }
-          .result a:hover {
-              text-decoration: underline;
-              color: #0b0080;
-          }
-          .result small {
-              color: #5f6368;
-              display: block;
-              font-size: 13px;
-              margin-top: 3px;
-          }
-          .cloud-preview {
-              display: none;
-              position: absolute;
-              left: 360px;
-              top: -10px;
-              width: 420px;
-              background: #fff;
-              padding: 6px;
-              border: 1px solid #ddd;
-              border-radius: 8px;
-              box-shadow: 0 8px 18px rgba(0,0,0,.12);
-              z-index: 10;
-          }
-          .result:hover .cloud-preview { display: block; }
-        </style>
-        """, unsafe_allow_html=True)
-
-                # ✅ Loop over search results (with snippet like Google)
+        # ---- Loop over search results ----
         for doc in sorted(resultats):
             file_path = os.path.join("documents", doc)
 
@@ -421,9 +379,7 @@ if query or search_clicked:
                 f'style="width:100%; height:auto;"/></div>' if img_b64 else ""
             )
 
-           # ---- Load short description (snippet) ----
-            import re
-
+            # ---- Build snippet ----
             snippet = ""
             if os.path.exists(file_path):
                 try:
@@ -440,26 +396,23 @@ if query or search_clicked:
                     else:
                         text = ""
 
-                    # 🧹 Clean & format text
-                    text = re.sub(r"\s+", " ", text.strip())  # remove extra spaces and line breaks
-                    text = text.capitalize()  # make it look cleaner
-                    if len(text) > 250:
-                        snippet = text[:250] + "..."
-                    else:
-                        snippet = text
+                    text = re.sub(r"\s+", " ", text.strip())
+                    snippet = text[:250] + "..." if len(text) > 250 else text
 
-                except Exception as e:
+                except Exception:
                     snippet = "(Aucun aperçu disponible)"
             else:
                 snippet = "(Fichier introuvable)"
 
-            # ---- Render result (like Google style) ----
+            # ---- Display result ----
             st.markdown(
                 f"""
                 <div class="result">
                     <a href="?view={doc}" target="_blank">{doc}</a>
                     <small>{file_path}</small>
-                    <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">{snippet}</p>
+                    <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">
+                        {snippet}
+                    </p>
                     {cloud_html}
                 </div>
                 """,
@@ -468,6 +421,7 @@ if query or search_clicked:
 
     else:
         st.warning("Aucun document trouvé")
+
 else:
     st.info("💡 Entrez un mot ou une requête pour commencer la recherche.")
 

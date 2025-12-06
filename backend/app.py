@@ -13,77 +13,6 @@ import streamlit as st
 import os, base64, docx
 import textwrap
 
-# --- Modal state (for nuage popup) ---
-if "show_cloud" not in st.session_state:
-    st.session_state["show_cloud"] = False
-if "cloud_doc" not in st.session_state:
-    st.session_state["cloud_doc"] = None
-
-params = st.query_params
-
-if "cloud" in params:
-    st.session_state["show_cloud"] = True
-    st.session_state["cloud_doc"] = params["cloud"]
-    st.query_params.clear()
-
-# --- CSS Global ---    
-st.markdown("""
-<style>
-.cloud-btn {
-    cursor: pointer;
-    font-size: 18px;
-    color: #1a0dab;
-    margin-left: 10px;
-}
-.cloud-btn:hover {
-    color: #0b0080;
-}
-
-.modal-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.modal-box {
-    background: white;
-    padding: 20px 30px;
-    border-radius: 12px;
-    width: 450px;
-    max-height: 70%;
-    overflow-y: auto;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-}
-
-.wc-word {
-    cursor: pointer;
-    margin: 6px;
-    display: inline-block;
-}
-.wc-word:hover {
-    text-decoration: underline;
-    color: #0b0080;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<script>
-window.addEventListener("message", (event) => {
-    if (event.data.type === "openCloud") {
-        const doc = event.data.doc;
-        const url = new URL(window.location.href);
-        url.searchParams.set("cloud", doc);
-        window.location.href = url.toString();
-    }
-});
-</script>
-""", unsafe_allow_html=True)
 # ------------------- Viewer mode: open clean document window ----------------------------------
 params = st.query_params
 if "view" in params:
@@ -476,38 +405,18 @@ if query or search_clicked:
                 snippet = "(Fichier introuvable)"
 
             # ---- Display result ----
-            
-            #st.markdown(
-            #   f"""
-            #    <div class="result">
-            #        <a href="?view={doc}" target="_blank">{doc}</a>
-            #        <small>{file_path}</small>
-            #        <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">
-            #            {snippet}
-            #        </p>
-            #        {cloud_html}
-            #    </div>
-            #    """,
-            #    unsafe_allow_html=True,
-            #)
-
-            # --- Title with cloud icon ---
             st.markdown(
                 f"""
                 <div class="result">
-                    <a href="?view={doc}" target="_blank"
-                    style="font-size:20px; color:#1a0dab; font-weight:600; text-decoration:none;">
-                    {doc}</a>  <span class="cloud-btn"
-                                    onclick="window.parent.postMessage({{type: 'openCloud', doc: '{doc}'}}, '*')">
-                                 ☁️
-                                </span>
+                    <a href="?view={doc}" target="_blank">{doc}</a>
                     <small>{file_path}</small>
-                     <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">
+                    <p style="color:#4d5156; font-size:15px; margin-top:4px; line-height:1.4;">
                         {snippet}
-                     </p>
+                    </p>
+                    {cloud_html}
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
     else:
@@ -515,41 +424,6 @@ if query or search_clicked:
 
 else:
     st.info("💡 Entrez un mot ou une requête pour commencer la recherche.")
-
-if "cloud" in params:
-    st.session_state["show_cloud"] = True
-    st.session_state["cloud_doc"] = params["cloud"]
-    st.query_params.clear()
-
-# -------------------- MODAL POPUP --------------------
-if st.session_state["show_cloud"] and st.session_state["cloud_doc"]:
-    doc = st.session_state["cloud_doc"]
-    frequencies = freqs.get(doc, {})
-
-    # Build clickable HTML cloud
-    words_html = ""
-    for word, count in sorted(frequencies.items(), key=lambda x: -x[1])[:40]:
-        size = 14 + (count * 2)
-        words_html += f"""
-            <span class="wc-word"
-                 style="font-size:{size}px; color:#1a0dab;"
-                  onclick="window.location.href='/?query={word}'">
-                {word}
-           </span>
-        """
-
-    modal_html = f"""
-        <div class="modal-bg">
-            <div class="modal-box">
-                <h3 style="text-align:center;">☁️ Nuage de mots – {doc}</h3>
-                <div>{words_html}</div>
-                <br>
-                <a href="/" style="display:block; text-align:center; margin-top:20px;">❌ Fermer</a>
-            </div>
-        </div>
-    """
-
-    st.markdown(modal_html, unsafe_allow_html=True)
 
 
 # ------------------- Display selected document -------------------

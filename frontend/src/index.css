@@ -1,0 +1,15 @@
+
+
+/* Global CSS font-family: Arial, sans-serif; */
+html, body {
+  margin: 0;
+  padding: 0;
+  
+  font-family: 'Inter', sans-serif;
+  background: #ffffff;
+  color: #333;
+}
+
+#root {
+  width: 100%;
+}

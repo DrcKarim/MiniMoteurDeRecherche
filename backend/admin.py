@@ -5,6 +5,10 @@ from collections import Counter
 import re, glob, docx
 from pdfminer.high_level import extract_text
 
+import spacy
+# Load French model once
+nlp = spacy.load("fr_core_news_sm")
+
 DB_PATH = "search_engine.db"
 UPLOAD_DIR = "documents"
 STOPWORDS_FILE = "stopwords.txt"
@@ -29,16 +33,62 @@ action = st.sidebar.radio(
 )
 
 # ---- Function: normalize words
-def normalisation(text):
+
+# Load stopwords ONCE
+STOPWORDS = set()
+if os.path.exists(STOPWORDS_FILE):
+    with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
+        STOPWORDS = {w.strip().lower() for w in f.read().splitlines()}
+else:
+    STOPWORDS = {"le","la","les","un","une","et","de","du","des","à","au","aux"}
+
+def normalisation(text: str):
+    """
+    Full normalization for French:
+    - lowercase
+    - extract alphabetic tokens
+    - lemmatization (infinitive form)
+    - remove stopwords & short words
+    """
     text = text.lower()
 
-    # Remove leading d', l', j', etc.
-    text = re.sub(r"\b[dlcjtsn]'(?=[a-zà-ÿ])", "", text)
+    # Extract only alphabetic words
+    tokens = re.findall(r"[a-zA-ZÀ-ÿ'-]+", text)
 
-    # Extract clean tokens
-    tokens = re.findall(r"[a-zA-ZÀ-ÿ]+", text)
+    if not tokens:
+        return []
 
-    return tokens
+    # Process with spaCy for lemmatization
+    doc = nlp(" ".join(tokens))
+
+    normalized = []
+    for token in doc:
+        lemma = token.lemma_.lower().strip()
+
+        if (
+            lemma
+            and lemma.isalpha()
+            and len(lemma) > 2
+            and lemma not in STOPWORDS
+        ):
+            normalized.append(lemma)
+
+    return normalized
+
+# -------------------------- FILE READERS --------------------------
+def lire_pdf(filepath):
+    try:
+        return extract_text(filepath)
+    except Exception:
+        return ""
+
+
+def lire_docx(filepath):
+    try:
+        doc = docx.Document(filepath)
+        return "\n".join([p.text for p in doc.paragraphs])
+    except Exception:
+        return ""
 
 # ---- Function: read DOCX and PDF
 def lire_docx(filepath):
@@ -58,15 +108,26 @@ def lire_pdf(filepath):
 #  1. Upload new documents
 # =======================================================================================
 if action == "📤 Ajouter un document":
-    st.subheader("📄 Importer un nouveau document")
-    uploaded_file = st.file_uploader("Choisissez un fichier (TXT, DOCX, PDF, HTML)", type=["txt", "docx", "pdf"])
+    st.subheader("📄 Importer des documents (plusieurs fichiers à la fois)")
 
-    if uploaded_file:
-        file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"✅ Fichier ajouté : {uploaded_file.name}")
-        st.info("Il sera indexé automatiquement au prochain redémarrage ou via 'Ré-indexer'.")
+    uploaded_files = st.file_uploader(
+        "Choisissez des fichiers (TXT, DOCX, PDF, HTML)",
+        type=["txt", "docx", "pdf", "html"],
+        accept_multiple_files=True
+    )
+
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
+
+            # Save each file
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+            st.success(f"✅ Fichier ajouté : {uploaded_file.name}")
+
+        st.info("Tous les fichiers seront indexés automatiquement au prochain redémarrage ou via 'Ré-indexer'.")
+
 
 # =======================================================================================
 #  2. View keyword statistics
@@ -101,8 +162,9 @@ elif action == "📊 Voir les statistiques":
     st.markdown("---")
 
     # ---- 2️⃣ Top documents by word count
+# ---- 2️⃣ Top documents by word count (WITH DELETE BUTTON)
     cursor.execute("""
-        SELECT d.filename, COUNT(w.word) AS total_mots, COUNT(DISTINCT w.word) AS mots_uniques
+        SELECT d.id, d.filename, COUNT(w.word) AS total_mots, COUNT(DISTINCT w.word) AS mots_uniques
         FROM documents d
         LEFT JOIN word_frequencies w ON d.id = w.document_id
         GROUP BY d.id
@@ -110,12 +172,52 @@ elif action == "📊 Voir les statistiques":
     """)
     doc_stats = cursor.fetchall()
 
+    st.markdown("### 🏆 Top documents par nombre de mots")
+
     if doc_stats:
-        st.markdown("### 🏆 Top documents par nombre de mots")
-        st.dataframe(
-            [{"Document": d, "Mots totaux": t, "Mots uniques": u} for d, t, u in doc_stats],
-            use_container_width=True
-        )
+
+        import pandas as pd
+
+        df = pd.DataFrame([
+            {
+                "ID": doc_id,
+                "Document": filename,
+                "Mots totaux": total_mots,
+                "Mots uniques": mots_uniques
+            }
+            for doc_id, filename, total_mots, mots_uniques in doc_stats
+        ])
+
+        for index, row in df.iterrows():
+            col1, col2, col3, col4, col5 = st.columns([3, 3, 2, 2, 1])
+
+            with col1:
+                st.write(row["Document"])
+
+            with col2:
+                st.write(f"📝 Total : {row['Mots totaux']}")
+
+            with col3:
+                st.write(f"🔤 Uniques : {row['Mots uniques']}")
+
+            with col5:
+                # BOUTON SUPPRIMER
+                    if st.button("🗑️", key=f"delete_{row['ID']}"):
+                        doc_id = row["ID"]
+
+                        # Delete DB entries
+                        cursor.execute("DELETE FROM word_frequencies WHERE document_id = ?", (doc_id,))
+                        cursor.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+                        conn.commit()
+
+                        # Delete file
+                        file_path = os.path.join(UPLOAD_DIR, row["Document"])
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+
+                        st.success(f"Document supprimé : {row['Document']}")
+                        st.rerun()        # ✅ correct refresh
+
     else:
         st.warning("⚠️ Aucun document indexé pour le moment.")
 

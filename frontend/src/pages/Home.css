@@ -1,0 +1,51 @@
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;    /* Bold comme Streamlit */
+  font-size: 48px;
+  margin-bottom: 50px;
+  color: #1a73e8;
+  letter-spacing: -0.5px;
+}
+
+.search-section {
+  margin-bottom: 40px;
+  width: 100%;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.results-section {
+  margin-top: 30px;
+  text-align: left;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.suggestion-box {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+.suggestion-btn {
+  background: none;
+  border: none;
+  color: #1a73e8;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.suggestion-btn:hover {
+  text-decoration: underline;
+}

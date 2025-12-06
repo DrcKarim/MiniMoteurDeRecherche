@@ -1,0 +1,118 @@
+.google-results {
+  width: 100%;
+  max-width: 650px;
+  margin: 30px auto;
+}
+
+.google-card {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.google-path {
+  font-size: 13px;
+  color: #006621;
+  margin-bottom: 4px;
+}
+
+.google-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a0dab;
+  text-decoration: none;
+}
+
+.google-title:hover {
+  text-decoration: underline;
+}
+
+.google-snippet {
+  margin-top: 8px;
+  color: #444;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/*
+.google-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+*/
+
+/* Word Cloud button */
+.wc-btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  background: white;  
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.wc-btn:hover {
+  background: rgb(205, 202, 202);
+}
+
+/* Open file button */
+.open-btn {
+  padding: 6px 12px;
+  background: #1e3a8a;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.open-btn:hover {
+  background: #334bb8;
+}
+
+.results-empty {
+  text-align: center;
+  color: #999;
+  margin-top: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+}
+
+.pg-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+.pg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pg-numbers {
+  display: flex;
+  gap: 8px;
+}
+
+.pg-number {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+.pg-number.active {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}

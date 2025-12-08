@@ -104,6 +104,20 @@ def lire_pdf(filepath):
     except:
         return ""
 
+def lire_html(filepath):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            text = f.read()
+
+        # Remove HTML tags
+        text = re.sub(r"<[^>]+>", " ", text)
+
+        return text
+    except:
+        return ""
+
+
+
 # =======================================================================================
 #  1. Upload new documents
 # =======================================================================================
@@ -127,6 +141,49 @@ if action == "📤 Ajouter un document":
             st.success(f"✅ Fichier ajouté : {uploaded_file.name}")
 
         st.info("Tous les fichiers seront indexés automatiquement au prochain redémarrage ou via 'Ré-indexer'.")
+
+
+# =======================================================================================
+#  1B. Upload with format filtering (CASE À COCHER)
+# =======================================================================================
+if action == "📤 Ajouter un document":    
+    st.subheader("📁 Importer un document (avec choix des formats)")
+
+    # Cases à cocher
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        allow_txt = st.checkbox("TXT", value=True)
+    with col2:
+        allow_pdf = st.checkbox("PDF", value=True)
+    with col3:
+        allow_docx = st.checkbox("DOCX", value=True)
+    with col4:
+        allow_html = st.checkbox("HTML", value=True)
+
+    allowed_ext = []
+    if allow_txt: allowed_ext.append("txt")
+    if allow_pdf: allowed_ext.append("pdf")
+    if allow_docx: allowed_ext.append("docx")
+    if allow_html: allowed_ext.append("html")
+
+    uploaded_filtered = st.file_uploader(
+        "Sélectionnez un fichier :",
+        type=allowed_ext,   # ❗ Restriction dynamique
+        accept_multiple_files=False  # un seul document
+    )
+
+    if uploaded_filtered:
+        file_ext = uploaded_filtered.name.split(".")[-1].lower()
+
+        if file_ext not in allowed_ext:
+            st.error(f"❌ Le format .{file_ext} n'est pas autorisé.")
+        else:
+            file_path = os.path.join(UPLOAD_DIR, uploaded_filtered.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_filtered.getbuffer())
+
+            st.success(f"✅ Document importé : {uploaded_filtered.name}")
+            st.info("Il sera indexé au prochain redémarrage ou via 'Ré-indexer'.")
 
 
 # =======================================================================================
@@ -256,10 +313,11 @@ elif action == "📊 Voir les statistiques":
 # =======================================================================================
 # 🧹 3. Reindex documents
 # =======================================================================================
+
 elif action == "🧹 Ré-indexer":
     st.subheader("🔄 Ré-indexation complète")
 
-    # ---- Load stopwords
+    # ---- 1️⃣ Load stopwords
     if os.path.exists(STOPWORDS_FILE):
         with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
             stopwords = set(word.strip().lower() for word in f.read().splitlines() if word.strip())
@@ -267,39 +325,65 @@ elif action == "🧹 Ré-indexer":
         stopwords = set()
         st.warning("⚠️ Aucun fichier de stopwords trouvé. Tous les mots seront indexés.")
 
+
+    # ---- 2️⃣ List all files
     files = os.listdir(UPLOAD_DIR)
     if not files:
         st.warning("Aucun fichier trouvé dans le dossier 'documents'.")
-    else:
+        st.stop()
+
+    total_files = len(files)
+
+    # ---- Progress UI
+    progress_bar = st.progress(0)
+    spinner = st.spinner("📚 Indexation en cours, veuillez patienter…")
+    status_text = st.empty()
+
+    with spinner:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        # Clear old data
+        # ---- Reset database
         cursor.execute("DELETE FROM documents")
         cursor.execute("DELETE FROM word_frequencies")
 
-        for file in files:
+        # ---- 3️⃣ Iterate through files
+        for i, file in enumerate(files, start=1):
             path = os.path.join(UPLOAD_DIR, file)
             ext = os.path.splitext(file)[1].lower()
             content = ""
 
+            # ---- Read file content depending on type
             if ext == ".txt":
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
+
             elif ext == ".docx":
                 content = lire_docx(path)
+
             elif ext == ".pdf":
                 content = lire_pdf(path)
 
-            # Insert new document
-            cursor.execute("INSERT INTO documents (filename, filetype, content) VALUES (?, ?, ?)", (file, ext, content))
+            elif ext in [".html", ".htm"]:
+                content = lire_html(path)
+
+            else:
+                status_text.write(f"⚠️ Format non supporté : {file}")
+                continue
+
+            # ---- Insert document into DB
+            cursor.execute(
+                "INSERT INTO documents (filename, filetype, content) VALUES (?, ?, ?)",
+                (file, ext, content)
+            )
             doc_id = cursor.lastrowid
 
-            # Tokenize and filter stopwords
+            # ---- Normalize & index words
             words = Counter(normalisation(content))
-            added_words = 0
+            inserted = 0
+
             for w, c in words.items():
-                w = w.lower().strip()  # normalize the token
+                w = w.lower().strip()
                 if w and w not in stopwords and len(w) > 2:
                     cursor.execute("""
                         INSERT INTO word_frequencies (document_id, word, count)
@@ -307,14 +391,21 @@ elif action == "🧹 Ré-indexer":
                         ON CONFLICT(document_id, word)
                         DO UPDATE SET count = excluded.count;
                     """, (doc_id, w, c))
-                    added_words += 1
+                    inserted += 1
 
-            if added_words == 0:
-                st.info(f"ℹ️ Aucun mot utile indexé pour {file} (filtré par les stopwords).")
+            # ---- Update progress UI
+            progress = i / total_files
+            progress_bar.progress(progress)
+
+            if inserted == 0:
+                status_text.write(f"ℹ️ Aucun mot utile trouvé dans : **{file}**")
+            else:
+                status_text.write(f"📄 Indexé : **{file}** ({inserted} mots utiles)")
 
         conn.commit()
         conn.close()
-        st.success("✅ Ré-indexation terminée avec succès (stopwords exclus et mots normalisés).")
+
+    st.success("✅ Ré-indexation terminée avec succès !")
 
 
 # =======================================================================================

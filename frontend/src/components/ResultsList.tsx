@@ -45,6 +45,7 @@ export default function ResultsList({ results }: { results: any[] }) {
             >
               ☁️
             </button>
+            <div className="score-tag">{item.score}</div>
           <p className="google-path">Documents/{item.path}</p>
             
           <p className="google-snippet">{item.snippet}</p>

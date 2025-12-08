@@ -33,12 +33,16 @@ export default function Home() {
   return (
     <div className="container">
       <h1 className="title">🔍 DocuFind</h1>
-
+      
       <div className="search-section">
         <SearchBar 
           onSearch={handleSearch}
           keyword={query}   // <-- send the cloud word to SearchBar
         />
+        <p style={{textAlign:"center", color:"gray", fontSize:"11px", marginTop:"12px"}}>
+        Astuce : si vous saisissez plusieurs mots séparés par un espace, la recherche utilise <strong>OU</strong>. <br/>
+        Écrivez <strong>mot1 et mot2</strong> pour une recherche avec <strong>ET</strong>.
+        </p>
       </div>
 
       <div className="results-section">

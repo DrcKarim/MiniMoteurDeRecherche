@@ -116,3 +116,13 @@
   color: white;
   border-color: #1a73e8;
 }
+
+.score-tag {
+  background: #e0e0e0;
+  color: rgb(0, 0, 0);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 5px;
+  display: inline-block;
+}

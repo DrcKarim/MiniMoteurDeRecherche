@@ -120,32 +120,63 @@ def search(query: str = Query(..., min_length=1)):
     Return enriched search results:
     - filename
     - snippet
+    - score (ranking indicator)
     - path
     """
 
-    filenames = recherche(query, INDEX)  # existing search function
+    # Get list of filenames from the existing search
+    filenames = recherche(query, INDEX)
+    terms = query.lower().split()
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
     results = []
-    for filename in filenames:
-        filepath = os.path.join(DOCS_DIR, filename)
 
-        # Extract preview snippet
+    for filename in filenames:
+
+        # ---- 1️⃣ GET DOCUMENT ID
+        cursor.execute("SELECT id, content FROM documents WHERE filename = ?", (filename,))
+        row = cursor.fetchone()
+
+        if not row:
+            continue
+
+        doc_id, content = row
+
+        # ---- 2️⃣ CALCULATE SCORE BASED ON FREQUENCY OF SEARCH TERMS
+        score = 0
+        for term in terms:
+            cursor.execute("""
+                SELECT count FROM word_frequencies
+                WHERE document_id = ? AND word = ?
+            """, (doc_id, term.lower()))
+            freq = cursor.fetchone()
+            if freq:
+                score += freq[0]
+
+        # ---- 3️⃣ Extract snippet
+        filepath = os.path.join(DOCS_DIR, filename)
         snippet = extract_snippet(filepath)
 
-        # Path to raw file (→ used by the viewer)
-        raw_path = f"/raw/{filename}"
-
+        # ---- 4️⃣ Package results
         results.append({
             "filename": filename,
             "snippet": snippet,
-            "path": raw_path
+            "path": f"/raw/{filename}",
+            "score": score
         })
 
-    return JSONResponse({
+    conn.close()
+
+    # ---- 5️⃣ Sort results by score DESC
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    return {
         "query": query,
         "count": len(results),
         "results": results
-    })
+    }
 
 # --- Root endpoint (optional welcome) ---
 @app.get("/")

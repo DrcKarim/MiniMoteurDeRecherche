@@ -70,3 +70,19 @@
   transform: scale(1.15);
   text-decoration: underline;
 }
+
+
+.wc-search-btn {
+  margin-top: 20px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+}
+.wc-search-btn:hover {
+  background: #1559c5;
+}

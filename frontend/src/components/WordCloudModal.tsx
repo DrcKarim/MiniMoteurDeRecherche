@@ -4,13 +4,14 @@ import "./WordCloudModal.css";
 
 type CloudWord = {
   word: string;
-  count: number;  // backend returns "count"
+  count: number;
 };
 
 export default function WordCloudModal() {
   const [isOpen, setOpen] = useState(false);
   const [filename, setFilename] = useState("");
   const [words, setWords] = useState<CloudWord[]>([]);
+  const [selected, setSelected] = useState<string[]>([]); // NEW: selected words
 
   useEffect(() => {
     const listener = async (e: any) => {
@@ -19,10 +20,11 @@ export default function WordCloudModal() {
 
       setFilename(file);
       setOpen(true);
+      setSelected([]); // reset selection
 
       try {
         const data = await getWordCloud(file);
-        setWords(data.top_words || []); // [{word, count}]
+        setWords(data.top_words || []);
       } catch (err) {
         console.error("Word cloud error:", err);
       }
@@ -34,24 +36,26 @@ export default function WordCloudModal() {
 
   if (!isOpen) return null;
 
-  /** CLICK → SearchBar should receive it */
-  const handleWordClick = (word: string) => {
+  // Toggle selection of a word
+  const toggleSelect = (word: string) => {
+    setSelected((prev) =>
+      prev.includes(word)
+        ? prev.filter((w) => w !== word)
+        : [...prev, word]
+    );
+  };
+
+  // Send multi-word search
+  const runMultiSearch = () => {
+    if (!selected.length) return;
+    const query = selected.join(" ");
     window.dispatchEvent(
-      new CustomEvent("searchFromCloud", { detail: { word } })
+      new CustomEvent("searchFromCloud", { detail: { word: query } })
     );
     setOpen(false);
   };
 
-  /** 🎨 SCALE SIZES: transform count → font-size */
   const max = Math.max(...words.map((w) => w.count), 1);
-
-  const randomColor = () =>
-    `hsl(${Math.floor(Math.random() * 360)}, 70%, 45%)`;
-
-  const randomRotation = () => {
-    const angles = [-20, -10, 0, 10, 20];
-    return angles[Math.floor(Math.random() * angles.length)];
-  };
 
   return (
     <div className="wc-overlay" onClick={() => setOpen(false)}>
@@ -60,11 +64,12 @@ export default function WordCloudModal() {
           ✕
         </button>
 
-      {/*  <h2 className="wc-title">Word Cloud — {filename}</h2> */}
+      {/*  <h2 className="wc-title">Nuage de mots — {filename}</h2> */}
 
         <div className="wc-cloud">
           {words.map((w, i) => {
-            const size = 14 + (w.count / max) * 60; // dynamic scale 14px → 74px
+            const size = 14 + (w.count / max) * 60;
+            const isSelected = selected.includes(w.word);
 
             return (
               <span
@@ -72,19 +77,27 @@ export default function WordCloudModal() {
                 className="wc-word"
                 style={{
                   fontSize: `${size}px`,
-                  color: randomColor(),
-                  transform: `rotate(${randomRotation()}deg)`,
-                  margin: "5px 10px",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
                   cursor: "pointer",
+                  margin: "5px 10px",
                   display: "inline-block",
+                  background: isSelected ? "rgba(26, 115, 232, 0.20)" : "transparent",
+                  border: isSelected ? "1px solid #1a73e8" : "none",
                 }}
-                onClick={() => handleWordClick(w.word)}
+                onClick={() => toggleSelect(w.word)}
               >
                 {w.word}
               </span>
             );
           })}
         </div>
+
+        {selected.length > 0 && (
+          <button className="wc-search-btn" onClick={runMultiSearch}>
+            🔍 Rechercher ces {selected.length} mots
+          </button>
+        )}
       </div>
     </div>
   );

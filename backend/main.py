@@ -32,7 +32,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# --- CORS (to allow React frontend later) ---
+# ---------- CORS (to allow React frontend later) -----------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],          # later you can restrict to http://localhost:5173 etc.

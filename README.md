@@ -1,10 +1,10 @@
-# 📘 DocuFind — Mini Moteur de Recherche
+#  DocuFind — Mini Moteur de Recherche
 
 DocuFind est un mini moteur de recherche full-stack permettant d'indexer des documents (TXT, PDF, DOCX, HTML), d'effectuer des recherches avancées (OU, ET, normalisation linguistique), de visualiser les statistiques, et d'explorer les mots-clés via un Word Cloud interactif.
 
-## 🚀 Fonctionnalités principales
+##  Fonctionnalités principales
 
-### 🔍 Recherche intelligente
+###  Recherche intelligente
 
 - Recherche par mots simples ou multiples
 - Support automatique de **et** / **ou**
@@ -14,20 +14,20 @@ DocuFind est un mini moteur de recherche full-stack permettant d'indexer des doc
   - Lemmatisation française (spaCy)
 - Suggestions intelligentes en cas de fautes (distance de Levenshtein)
 
-### 📄 Formats supportés
+###  Formats supportés
 
 - `.txt`
 - `.pdf`
 - `.docx`
 - `.html`
 
-### ☁️ Word Cloud dynamique
+###  Word Cloud dynamique
 
 - Taille des mots proportionnelle à leur fréquence
 - Couleurs et rotation aléatoires
 - Clic sur un mot ➝ rempli automatiquement la barre de recherche
 
-### 📊 Dashboard Admin (Streamlit)
+###  Dashboard Admin (Streamlit)
 
 - Vue globale : nb de documents, mots totaux, mots uniques
 - Statistiques par document
@@ -36,17 +36,17 @@ DocuFind est un mini moteur de recherche full-stack permettant d'indexer des doc
 - Gestion des stopwords
 - Upload multiple
 
-## 🖼️ Aperçu de l'application
+##  Aperçu de l'application
 
-### 🔍 Page de recherche (Frontend React)
+###  Page de recherche (Frontend React)
 
 ![Screenshot User](screenUser.png)
 
-### 📊 Tableau de bord d'administration (Streamlit)
+###  Tableau de bord d'administration (Streamlit)
 
 ![Screenshot Admin](screenAdmin.png)
 
-## 🧱 Architecture du projet
+##  Architecture du projet
 
 ```
 DocuFind/
@@ -66,22 +66,22 @@ DocuFind/
 │   └── index.html
 ```
 
-## ▶️ Installation & Exécution
+## ▶ Installation & Exécution
 
-### 1️⃣ Backend — API FastAPI
+### 1️ Backend — API FastAPI
 
 ```bash
 cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-### 2️⃣ Dashboard Admin (Streamlit)
+### 2️ Dashboard Admin (Streamlit)
 
 ```bash
 streamlit run admin.py
 ```
 
-### 3️⃣ Frontend React (Vite)
+### 3️ Frontend React (Vite)
 
 ```bash
 cd frontend
@@ -89,7 +89,7 @@ npm install
 npm run dev
 ```
 
-## 🧹 Ré-indexer les documents
+##  Ré-indexer les documents
 
 Depuis le dashboard admin (menu : "Ré-indexer") :
 
@@ -98,7 +98,7 @@ Depuis le dashboard admin (menu : "Ré-indexer") :
 - Applique la normalisation + lemmatisation
 - Met à jour les tables SQLite
 
-## 🗑️ Suppression d'un document
+##  Suppression d'un document
 
 Un clic sur l'icône corbeille :
 
@@ -106,7 +106,7 @@ Un clic sur l'icône corbeille :
 - Supprime les entrées associées dans `word_frequencies`
 - Supprime le fichier du répertoire `/documents`
 
-## 📚 Technologies Utilisées
+##  Technologies Utilisées
 
 ### Backend
 
@@ -127,10 +127,10 @@ Un clic sur l'icône corbeille :
 
 - **Streamlit**
 
-## 🤝 Contribution
+##  Contribution
 
 Les contributions sont les bienvenues : optimisations, nouvelles fonctionnalités, améliorations UI/UX…
 
-## 📄 Licence
+##  Licence
 
 Projet académique — libre d'utilisation dans un cadre pédagogique.

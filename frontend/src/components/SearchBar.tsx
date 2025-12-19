@@ -11,14 +11,14 @@ export default function SearchBar({ onSearch, keyword }: Props) {
   const [query, setQuery] = useState(keyword || "");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // 🔄 Keep input synced when Home updates keyword
+  //  Keep input synced when Home updates keyword
   useEffect(() => {
     if (keyword !== undefined) {
       setQuery(keyword);
     }
   }, [keyword]);
 
-  // 🔍 Suggestion logic
+  //  Suggestion logic
   useEffect(() => {
     if (!query || query.trim().length < 3) {
       setSuggestions([]);

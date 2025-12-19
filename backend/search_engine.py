@@ -107,7 +107,7 @@ def acquisition(path=DOCUMENTS_DIR):
                 corpus[filename] = lire_docx(filepath)
 
         except Exception as e:
-            print(f"⚠️ Error reading {filename}: {e}")
+            print(f" Error reading {filename}: {e}")
 
     return corpus
 

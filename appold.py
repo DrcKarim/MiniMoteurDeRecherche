@@ -85,9 +85,9 @@ if "view" in params:
                 unsafe_allow_html=True,
             )
     else:
-        st.warning("⚠️ Le fichier n'existe plus.")
+        st.warning(" Le fichier n'existe plus.")
 
-    st.stop()  # ❗ Stops here — prevents search page from loading
+    st.stop()  #  Stops here — prevents search page from loading
 
 
 def wordcloud_to_base64(freq_dict) -> str:
@@ -231,7 +231,7 @@ def acquisition(path="documents"):
             elif filepath.endswith(".docx"):
                 docs[filename] = lire_docx(filepath)
         except Exception as e:
-            print(f"⚠️ Erreur de lecture du fichier {filename} : {e}")
+            print(f" Erreur de lecture du fichier {filename} : {e}")
     return docs
 
 # --------------------------------  Extraction / Indexation --------------------------------
@@ -279,7 +279,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-#st.title("🔍 DocuFind") 
+#st.title(" DocuFind") 
 
 # ---- Header with logo and app name ----
 st.markdown("""
@@ -298,11 +298,11 @@ doc_count = cursor.fetchone()[0]
 conn.close()
 
 if doc_count == 0:
-    st.warning("🗂️ Base de données vide — analyse des fichiers...")
+    st.warning(" Base de données vide — analyse des fichiers...")
     corpus = acquisition()
     freqs = extraction(corpus)
     save_to_db(corpus, freqs)
-    st.success("✅ Données insérées dans la base de données avec succès !")
+    st.success(" Données insérées dans la base de données avec succès !")
 else:
     corpus, freqs = load_from_db()
 
@@ -423,7 +423,7 @@ if query or search_clicked:
         st.warning("Aucun document trouvé")
 
 else:
-    st.info("💡 Entrez un mot ou une requête pour commencer la recherche.")
+    st.info(" Entrez un mot ou une requête pour commencer la recherche.")
 
 
 # ------------------- Display selected document -------------------
@@ -497,5 +497,5 @@ if "selected_doc" in st.session_state:
                 unsafe_allow_html=True,
             )
     else:
-        st.warning(f"⚠️ Le fichier '{selected_doc}' n'existe plus dans le dossier documents.")
+        st.warning(f" Le fichier '{selected_doc}' n'existe plus dans le dossier documents.")
 

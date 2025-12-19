@@ -135,7 +135,7 @@ def search(query: str = Query(..., min_length=1)):
 
     for filename in filenames:
 
-        # ---- 1️⃣ GET DOCUMENT ID
+        # ---- 1️ GET DOCUMENT ID
         cursor.execute("SELECT id, content FROM documents WHERE filename = ?", (filename,))
         row = cursor.fetchone()
 
@@ -144,7 +144,7 @@ def search(query: str = Query(..., min_length=1)):
 
         doc_id, content = row
 
-        # ---- 2️⃣ CALCULATE SCORE BASED ON FREQUENCY OF SEARCH TERMS
+        # ---- 2️ CALCULATE SCORE BASED ON FREQUENCY OF SEARCH TERMS
         score = 0
         for term in terms:
             cursor.execute("""
@@ -155,11 +155,11 @@ def search(query: str = Query(..., min_length=1)):
             if freq:
                 score += freq[0]
 
-        # ---- 3️⃣ Extract snippet
+        # ---- 3️ Extract snippet
         filepath = os.path.join(DOCS_DIR, filename)
         snippet = extract_snippet(filepath)
 
-        # ---- 4️⃣ Package results
+        # ---- 4️ Package results
         results.append({
             "filename": filename,
             "snippet": snippet,
@@ -169,7 +169,7 @@ def search(query: str = Query(..., min_length=1)):
 
     conn.close()
 
-    # ---- 5️⃣ Sort results by score DESC
+    # ---- 5️ Sort results by score DESC
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     return {
@@ -213,7 +213,7 @@ def cloud(filename: str, limit: int = 40):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # 1️⃣ Get the document ID
+    # 1️ Get the document ID
     cursor.execute("SELECT id FROM documents WHERE filename = ?", (filename,))
     row = cursor.fetchone()
 
@@ -223,7 +223,7 @@ def cloud(filename: str, limit: int = 40):
 
     doc_id = row[0]
 
-    # 2️⃣ Fetch words already filtered by admin.py
+    # 2️ Fetch words already filtered by admin.py
     cursor.execute("""
         SELECT word, count 
         FROM word_frequencies
@@ -235,7 +235,7 @@ def cloud(filename: str, limit: int = 40):
     top_words = cursor.fetchall()
     conn.close()
 
-    # 3️⃣ Format response
+    # 3️ Format response
     return {
         "filename": filename,
         "word_count": len(top_words),

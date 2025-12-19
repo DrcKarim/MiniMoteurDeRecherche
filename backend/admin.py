@@ -168,7 +168,7 @@ if action == "📤 Ajouter un document":
 
     uploaded_filtered = st.file_uploader(
         "Sélectionnez un fichier :",
-        type=allowed_ext,   # ❗ Restriction dynamique
+        type=allowed_ext,   #  Restriction dynamique
         accept_multiple_files=False  # un seul document
     )
 
@@ -176,7 +176,7 @@ if action == "📤 Ajouter un document":
         file_ext = uploaded_filtered.name.split(".")[-1].lower()
 
         if file_ext not in allowed_ext:
-            st.error(f"❌ Le format .{file_ext} n'est pas autorisé.")
+            st.error(f" Le format .{file_ext} n'est pas autorisé.")
         else:
             file_path = os.path.join(UPLOAD_DIR, uploaded_filtered.name)
             with open(file_path, "wb") as f:
@@ -195,7 +195,7 @@ elif action == "📊 Voir les statistiques":
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # ---- 1️⃣ Global overview
+    # ---- 1️ Global overview
     total_docs = cursor.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
     total_words = cursor.execute("SELECT COUNT(*) FROM word_frequencies").fetchone()[0]
     unique_words = cursor.execute("SELECT COUNT(DISTINCT word) FROM word_frequencies").fetchone()[0]
@@ -218,8 +218,8 @@ elif action == "📊 Voir les statistiques":
 
     st.markdown("---")
 
-    # ---- 2️⃣ Top documents by word count
-# ---- 2️⃣ Top documents by word count (WITH DELETE BUTTON)
+    # ---- 2️ Top documents by word count
+# ---- 2️ Top documents by word count (WITH DELETE BUTTON)
     cursor.execute("""
         SELECT d.id, d.filename, COUNT(w.word) AS total_mots, COUNT(DISTINCT w.word) AS mots_uniques
         FROM documents d
@@ -273,14 +273,14 @@ elif action == "📊 Voir les statistiques":
                             os.remove(file_path)
 
                         st.success(f"Document supprimé : {row['Document']}")
-                        st.rerun()        # ✅ correct refresh
+                        st.rerun()        # correct refresh
 
     else:
         st.warning("⚠️ Aucun document indexé pour le moment.")
 
     st.markdown("---")
 
-    # ---- 3️⃣ Per-document breakdown
+    # ---- 3️ Per-document breakdown
     if total_docs > 0:
         st.markdown("### 🔍 Analyse d’un document spécifique")
         cursor.execute("SELECT filename, id FROM documents ORDER BY filename")
@@ -317,7 +317,7 @@ elif action == "📊 Voir les statistiques":
 elif action == "🧹 Ré-indexer":
     st.subheader("🔄 Ré-indexation complète")
 
-    # ---- 1️⃣ Load stopwords
+    # ---- 1️ Load stopwords
     if os.path.exists(STOPWORDS_FILE):
         with open(STOPWORDS_FILE, "r", encoding="utf-8") as f:
             stopwords = set(word.strip().lower() for word in f.read().splitlines() if word.strip())
@@ -326,7 +326,7 @@ elif action == "🧹 Ré-indexer":
         st.warning("⚠️ Aucun fichier de stopwords trouvé. Tous les mots seront indexés.")
 
 
-    # ---- 2️⃣ List all files
+    # ---- 2️ List all files
     files = os.listdir(UPLOAD_DIR)
     if not files:
         st.warning("Aucun fichier trouvé dans le dossier 'documents'.")
@@ -347,7 +347,7 @@ elif action == "🧹 Ré-indexer":
         cursor.execute("DELETE FROM documents")
         cursor.execute("DELETE FROM word_frequencies")
 
-        # ---- 3️⃣ Iterate through files
+        # ---- 3️ Iterate through files
         for i, file in enumerate(files, start=1):
             path = os.path.join(UPLOAD_DIR, file)
             ext = os.path.splitext(file)[1].lower()
@@ -409,7 +409,7 @@ elif action == "🧹 Ré-indexer":
 
 
 # =======================================================================================
-# ✏️ 4. Manage Stopwords
+#  4. Manage Stopwords
 # =======================================================================================
 elif action == "✏️ Gérer les stopwords":
     st.subheader("📝 Gestion des Stopwords")
@@ -434,7 +434,7 @@ elif action == "✏️ Gérer les stopwords":
                 f.write("\n".join(stopwords))
             st.success(f"✅ '{new_word}' ajouté à la liste.")
         else:
-            st.warning("⚠️ Mot déjà présent ou vide.")
+            st.warning(" Mot déjà présent ou vide.")
 
     st.markdown("---")
 
@@ -446,7 +446,7 @@ elif action == "✏️ Gérer les stopwords":
                 f.write("\n".join(stopwords))
             st.success(f"🗑️ '{remove_word}' supprimé de la liste.")
         else:
-            st.warning("⚠️ Sélectionnez un mot valide.")
+            st.warning(" Sélectionnez un mot valide.")
 
     st.markdown("---")
     if st.button("🧾 Afficher le contenu brut du fichier"):

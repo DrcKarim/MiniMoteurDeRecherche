@@ -17,7 +17,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  // ⭐ Cloud click -> ONLY fill the input (no search)
+  //  Cloud click -> ONLY fill the input (no search)
   useEffect(() => {
     const listener = (e: any) => {
       const word = e.detail?.word;

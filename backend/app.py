@@ -85,9 +85,9 @@ if "view" in params:
                 unsafe_allow_html=True,
             )
     else:
-        st.warning("⚠️ Le fichier n'existe plus.")
+        st.warning(" Le fichier n'existe plus.")
 
-    st.stop()  # ❗ Stops here — prevents search page from loading
+    st.stop()  #  Stops here — prevents search page from loading
 
 
 def wordcloud_to_base64(freq_dict) -> str:
@@ -497,5 +497,5 @@ if "selected_doc" in st.session_state:
                 unsafe_allow_html=True,
             )
     else:
-        st.warning(f"⚠️ Le fichier '{selected_doc}' n'existe plus dans le dossier documents.")
+        st.warning(f" Le fichier '{selected_doc}' n'existe plus dans le dossier documents.")
 

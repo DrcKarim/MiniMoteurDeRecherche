@@ -133,4 +133,4 @@ Les contributions sont les bienvenues : optimisations, nouvelles fonctionnalité
 
 ##  Licence
 
-Projet académique — libre d'utilisation dans un cadre pédagogique.
+Libre d'utilisation
